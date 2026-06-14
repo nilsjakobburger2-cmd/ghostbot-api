@@ -8,7 +8,7 @@ app.get("/", (req, res) => {
   res.send("Justice API Online");
 });
 
-const WEBHOOK_URL = "https://discord.com/api/webhooks/1505582300967206912/qclIUf2wLvUEbr_x8-K-YEKbLMg_iSfyblTeoj-aH4hIiL9PWb6W-GCwUEvx-LM-P7U9";
+const WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_HERE"; // ⚠️ don't expose real webhook publicly
 
 app.post("/case", async (req, res) => {
   try {
@@ -17,7 +17,8 @@ app.post("/case", async (req, res) => {
       plaintiff,
       violation,
       evidence,
-      guild_id
+      guild_id,
+      guild_name
     } = req.body;
 
     console.log("Case received:", req.body);
@@ -29,9 +30,9 @@ app.post("/case", async (req, res) => {
       },
       body: JSON.stringify({
         content:
-          `⚖️ New Case Filed\n` +
-          `Defendant: <@${defendant}>\n` +
-          `Plaintiff: <@${plaintiff}>`,
+          `⚖️ **New Case Filed**\n` +
+          `Defendant: ${defendant ? `<@${defendant}>` : "Unknown"}\n` +
+          `Plaintiff: ${plaintiff ? `<@${plaintiff}>` : "Unknown"}`,
 
         allowed_mentions: {
           parse: ["users"]
@@ -43,13 +44,13 @@ app.post("/case", async (req, res) => {
             color: 15158332,
             fields: [
               {
-                name: "Defendant ID",
-                value: defendant || "Unknown",
+                name: "Defendant",
+                value: defendant ? `<@${defendant}>` : "Unknown",
                 inline: true
               },
               {
-                name: "Plaintiff ID",
-                value: plaintiff || "Unknown",
+                name: "Plaintiff",
+                value: plaintiff ? `<@${plaintiff}>` : "Unknown",
                 inline: true
               },
               {
@@ -62,7 +63,9 @@ app.post("/case", async (req, res) => {
               },
               {
                 name: "Origin Server",
-                value: guild_id || "Unknown"
+                value: guild_name
+                  ? `${guild_name} (${guild_id || "No ID"})`
+                  : (guild_id || "Unknown")
               }
             ],
             timestamp: new Date().toISOString()
@@ -71,14 +74,12 @@ app.post("/case", async (req, res) => {
       })
     });
 
-    res.json({
-      success: true
-    });
+    return res.json({ success: true });
 
   } catch (error) {
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: error.message
     });
