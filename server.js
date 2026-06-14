@@ -3,12 +3,12 @@ const express = require("express");
 const app = express();
 app.use(express.json());
 
-// UptimeRobot will ping this
+// Health check
 app.get("/", (req, res) => {
-  res.send("Justice API Online");
+  res.send("⚖️ Justice API Online");
 });
 
-const WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_HERE"; // ⚠️ don't expose real webhook publicly
+const WEBHOOK_URL = "YOUR_DISCORD_WEBHOOK_URL_HERE";
 
 app.post("/case", async (req, res) => {
   try {
@@ -17,8 +17,7 @@ app.post("/case", async (req, res) => {
       plaintiff,
       violation,
       evidence,
-      guild_id,
-      guild_name
+      server_name
     } = req.body;
 
     console.log("Case received:", req.body);
@@ -32,7 +31,8 @@ app.post("/case", async (req, res) => {
         content:
           `⚖️ **New Case Filed**\n` +
           `Defendant: ${defendant ? `<@${defendant}>` : "Unknown"}\n` +
-          `Plaintiff: ${plaintiff ? `<@${plaintiff}>` : "Unknown"}`,
+          `Plaintiff: ${plaintiff ? `<@${plaintiff}>` : "Unknown"}\n` +
+          `Server: ${server_name || "Unknown Server"}`,
 
         allowed_mentions: {
           parse: ["users"]
@@ -63,9 +63,7 @@ app.post("/case", async (req, res) => {
               },
               {
                 name: "Origin Server",
-                value: guild_name
-                  ? `${guild_name} (${guild_id || "No ID"})`
-                  : (guild_id || "Unknown")
+                value: server_name || "Unknown Server"
               }
             ],
             timestamp: new Date().toISOString()
@@ -77,7 +75,7 @@ app.post("/case", async (req, res) => {
     return res.json({ success: true });
 
   } catch (error) {
-    console.error(error);
+    console.error("Error:", error);
 
     return res.status(500).json({
       success: false,
